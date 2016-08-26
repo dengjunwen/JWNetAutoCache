@@ -43,8 +43,11 @@
 
 附上github demo的地址：[demo地址][3]
 
-> 使用方法：在需要开启的时候调用 [JWCacheURLProtocol startListeningNetWorking];
-> 使用结束后调用    [JWCacheURLProtocol cancelListeningNetWorking];
+使用方法：
+在需要开启的时候调用
+`[JWCacheURLProtocol startListeningNetWorking];`
+ 使用结束后调用   
+`[JWCacheURLProtocol cancelListeningNetWorking];`
 
 
   [1]: http://7xrj9d.com1.z0.glb.clouddn.com/cache%E5%9B%BE.png
