@@ -10,13 +10,34 @@
 
 #import "JWCacheURLProtocol.h"
 
-@interface JWUrlCacheUtil : NSObject
+@interface JWUrlCacheConfig: NSObject
 
 @property (readwrite, nonatomic, strong) NSMutableDictionary *urlDict;//记录上一次url请求时间
-+ (instancetype)instance;
+@property (readwrite, nonatomic, assign) NSInteger updateInterval;//相同的url地址请求，相隔大于等于updateInterval才会发出后台更新的网络请求，小于的话不发出请求。
+@property (readwrite, nonatomic, strong) NSURLSessionConfiguration *config;//config是全局的，所有的网络请求都用这个config
+@property (readwrite, nonatomic, strong) NSOperationQueue *forgeroundNetQueue;
+@property (readwrite, nonatomic, strong) NSOperationQueue *backgroundNetQueue;
+
 @end
 
-@implementation JWUrlCacheUtil
+#define DefaultUpdateInterval 3600
+@implementation JWUrlCacheConfig
+
+
+- (NSInteger)updateInterval{
+    if (_updateInterval == 0) {
+        //默认后台更新的时间为3600秒
+        _updateInterval = DefaultUpdateInterval;
+    }
+    return _updateInterval;
+}
+
+- (NSURLSessionConfiguration *)config{
+    if (!_config) {
+        _config = [NSURLSessionConfiguration defaultSessionConfiguration];
+    }
+    return _config;
+}
 
 - (NSMutableDictionary *)urlDict{
     if (!_urlDict) {
@@ -25,14 +46,33 @@
     return _urlDict;
 }
 
+- (NSOperationQueue *)forgeroundNetQueue{
+    if (!_forgeroundNetQueue) {
+         _forgeroundNetQueue = [[NSOperationQueue alloc] init];
+        _forgeroundNetQueue.maxConcurrentOperationCount = 10;
+    }
+    return _forgeroundNetQueue;
+}
+
+- (NSOperationQueue *)backgroundNetQueue{
+    if (!_backgroundNetQueue) {
+        _backgroundNetQueue = [[NSOperationQueue alloc] init];
+        _backgroundNetQueue.maxConcurrentOperationCount = 6;
+    }
+    return _backgroundNetQueue;
+}
 
 + (instancetype)instance{
-    static JWUrlCacheUtil *urlCacheUtil = nil;
+    static JWUrlCacheConfig *urlCacheConfig = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        urlCacheUtil = [[JWUrlCacheUtil alloc] init];
+        urlCacheConfig = [[JWUrlCacheConfig alloc] init];
     });
-    return urlCacheUtil;
+    return urlCacheConfig;
+}
+
+- (void)clearUrlDict{
+    [JWUrlCacheConfig instance].urlDict = nil;
 }
 
 @end
@@ -48,28 +88,26 @@ static NSString * const checkUpdateInBgKey = @"checkUpdateInBg";
 
 @end
 
-#define DefaultUpdateInterval 3600
 @implementation JWCacheURLProtocol
-
-- (NSInteger)updateInterval{
-    if (_updateInterval == 0) {
-        //默认后台更新的时间为3600秒
-        _updateInterval = DefaultUpdateInterval;
-    }
-    return _updateInterval;
-}
 
 + (void)startListeningNetWorking{
     [NSURLProtocol registerClass:[JWCacheURLProtocol class]];
 }
 
-- (void)clearUrlDict{
-    NSLog(@"清空urldir");
-    [JWUrlCacheUtil instance].urlDict = nil;
-}
-
 + (void)cancelListeningNetWorking{
     [NSURLProtocol unregisterClass:[JWCacheURLProtocol class]];
+}
+
++ (void)setConfig:(NSURLSessionConfiguration *)config{
+    [[JWUrlCacheConfig instance] setConfig:config];
+}
+
++ (void)setUpdateInterval:(NSInteger)updateInterval{
+    [[JWUrlCacheConfig instance] setUpdateInterval:updateInterval];
+}
+
++ (void)clearUrlDict{
+    [[JWUrlCacheConfig instance] clearUrlDict];
 }
 
 + (BOOL)canInitWithRequest:(NSURLRequest *)request{
@@ -88,32 +126,30 @@ static NSString * const checkUpdateInBgKey = @"checkUpdateInBg";
 }
 
 - (void)backgroundCheckUpdate{
-    
-    dispatch_queue_t queue = dispatch_queue_create("cache.junwen.com", NULL);
-    dispatch_async(queue, ^{
-        NSDate *updateDate = [[JWUrlCacheUtil instance].urlDict objectForKey:self.request.URL.absoluteString];
+    __weak typeof(self) weakSelf = self;
+    [[[JWUrlCacheConfig instance] backgroundNetQueue] addOperationWithBlock:^{
+        NSDate *updateDate = [[JWUrlCacheConfig instance].urlDict objectForKey:weakSelf.request.URL.absoluteString];
         if (updateDate) {
             //判读两次相同的url地址发出请求相隔的时间，如果相隔的时间小于给定的时间，不发出请求。否则发出网络请求
             NSDate *currentDate = [NSDate date];
             NSInteger interval = [currentDate timeIntervalSinceDate:updateDate];
-            if (interval < self.updateInterval) {
+            if (interval < [JWUrlCacheConfig instance].updateInterval) {
                 return;
             }
         }
-        NSMutableURLRequest *mutableRequest = [[self request] mutableCopy];
+        NSMutableURLRequest *mutableRequest = [[weakSelf request] mutableCopy];
         [NSURLProtocol setProperty:@YES forKey:checkUpdateInBgKey inRequest:mutableRequest];
-        [self netRequestWithRequest:mutableRequest];
-    });
+        [weakSelf netRequestWithRequest:mutableRequest];
+
+    }];
 }
 
 - (void)netRequestWithRequest:(NSURLRequest *)request{
-    if (!self.config) {
-        self.config = [NSURLSessionConfiguration defaultSessionConfiguration];
-    }
-    self.session = [NSURLSession sessionWithConfiguration:self.config delegate:self delegateQueue:[NSOperationQueue mainQueue]];
+    NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
+    self.session = [NSURLSession sessionWithConfiguration:config delegate:self delegateQueue:[JWUrlCacheConfig instance].forgeroundNetQueue];
     NSURLSessionDataTask * sessionTask = [self.session dataTaskWithRequest:request];
+    [[JWUrlCacheConfig instance].urlDict setValue:[NSDate date] forKey:self.request.URL.absoluteString];
     [sessionTask resume];
-    [[JWUrlCacheUtil instance].urlDict setValue:[NSDate date] forKey:self.request.URL.absoluteString];
 }
 
 
@@ -141,8 +177,11 @@ static NSString * const checkUpdateInBgKey = @"checkUpdateInBg";
 
 - (BOOL)isUseCache{
     //如果有缓存则使用缓存，没有缓存则发出请求
-    
-    return YES;
+    NSCachedURLResponse *urlResponse = [[NSURLCache sharedURLCache] cachedResponseForRequest:[self request]];
+    if (urlResponse) {
+        return YES;
+    }
+    return NO;
 }
 
 - (void)appendData:(NSData *)newData
@@ -181,8 +220,6 @@ static NSString * const checkUpdateInBgKey = @"checkUpdateInBg";
         self.data = nil;
     }
 }
-
-
 
 
 @end

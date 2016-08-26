@@ -17,19 +17,15 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+    //使用方法，在开启webview的时候开启监听，，销毁weibview的时候取消监听，否则监听还在继续。将会监听所有的网络请求
     [JWCacheURLProtocol startListeningNetWorking];
     UIWebView *webview = [[UIWebView alloc] initWithFrame:self.view.bounds];
     [self.view addSubview:webview];
-    NSURL *URL = [NSURL URLWithString:@"https://m.taobao.com"];
+    NSURL *URL = [NSURL URLWithString:@"https://m.jd.com"];
     NSURLRequest *request = [[NSURLRequest alloc] initWithURL:URL];
     [webview loadRequest:request];
     
-    NSLog(@"---%@", NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0]);
-//    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-//        [JWCacheURLProtocol cancelListeningNetWorking];
-//    });
-//    [JWCacheURLProtocol cancelListeningNetWorking];
+    NSLog(@"cache directory---%@", NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES)[0]);
 }
 
 - (void)didReceiveMemoryWarning {

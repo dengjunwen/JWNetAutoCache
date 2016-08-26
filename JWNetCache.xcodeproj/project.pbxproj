@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8CBA10121D6C4A5000E6E348 /* JWCacheURLProtocol.h in Sources */ = {isa = PBXBuildFile; fileRef = 8CF08A041D66F0EE00C8AC2D /* JWCacheURLProtocol.h */; };
 		8CF089D91D66EDB900C8AC2D /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 8CF089D81D66EDB900C8AC2D /* main.m */; };
 		8CF089DC1D66EDB900C8AC2D /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 8CF089DB1D66EDB900C8AC2D /* AppDelegate.m */; };
 		8CF089DF1D66EDB900C8AC2D /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 8CF089DE1D66EDB900C8AC2D /* ViewController.m */; };
@@ -208,7 +207,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8CBA10121D6C4A5000E6E348 /* JWCacheURLProtocol.h in Sources */,
 				8CF089DF1D66EDB900C8AC2D /* ViewController.m in Sources */,
 				8CF089DC1D66EDB900C8AC2D /* AppDelegate.m in Sources */,
 				8CF089D91D66EDB900C8AC2D /* main.m in Sources */,
