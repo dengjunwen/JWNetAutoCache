@@ -28,6 +28,10 @@
     NSLog(@"cache directory---%@", NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES)[0]);
 }
 
+- (void)dealloc{
+    [JWCacheURLProtocol cancelListeningNetWorking];//在不需要用到webview的时候即使的取消监听
+}
+
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
