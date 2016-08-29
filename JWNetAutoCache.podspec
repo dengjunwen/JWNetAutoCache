@@ -9,7 +9,8 @@ Pod::Spec.new do |s|
   s.homepage     = "https://github.com/dengjunwen/JWNetAutoCache"
   s.license      = { :type => 'MIT', :file => 'LICENSE' }
   s.author             = { "dengjunwen" => "dengjunwen1992@163.com" }
+  s.ios.deployment_target = '6.0'
   s.source       = { :git => "https://github.com/dengjunwen/JWNetAutoCache.git", :tag => s.version.to_s}
-  s.source_files = '*.{h,m}'
+  s.source_files = 'JWNetAutoCache/*.{h,m}'
   s.requires_arc = true
 end
