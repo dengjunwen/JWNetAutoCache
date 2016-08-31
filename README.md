@@ -1,4 +1,4 @@
-# UIWebview使用缓存并且保证实时性
+﻿# UIWebview使用缓存并且保证实时性`此处输入代码`
 
 标签（空格分隔）： iOS 缓存 UIWebview 实时更新
 
@@ -19,7 +19,7 @@
  - NSURLRequestReturnCacheDataDontLoad
    已经存在的缓存数据用于请求返回，不管它的过期日期和已经存在了多久。如果没有请求对应的缓存数据，不要去数据源读取，该请求被设置为失败，这种情况多用于离线模式
  - NSURLRequestReloadRevalidatingCacheData //源文件中写到没有实现
-
+  
 
 > 其中我觉得最接近理想状态的就是默认的缓存策略了-NSURLRequestUseProtocolCachePolicy。 这个缓存策略的缓存模式，经过探究，如下图所示：
 ![默认缓存策略的流程图][1]
@@ -41,14 +41,26 @@
 这里的缓存策略依赖于自己的设定，使用webview自带的缓存策略即可。然后根据  当前时间 - 上一次更新时间 > 设定更新间隔时间按  这个条件来选择是否更新。
 &nbsp;&nbsp;&nbsp;&nbsp;这样做的好处是防止白屏，又能实时更新。
 
-附上github demo的地址：[demo地址][3]
-使用方法： pod 'JWNetAutoCache'
-在需要开启的时候调用
-`[JWCacheURLProtocol startListeningNetWorking];`
- 使用结束后调用
-`[JWCacheURLProtocol cancelListeningNetWorking];`
+
+附上github demo的地址：[demo地址][3]  
+使用方法：  
+
+    pod 'JWNetAutoCache'
+
+  
+或者直接下载文件，将JWNetAutoCache目录下的两个文件引入。  
+在需要开启的时候调用  
+
+`[JWCacheURLProtocol startListeningNetWorking];`  
+
+ 使用结束后调用  
+ 
+`[JWCacheURLProtocol cancelListeningNetWorking];`  
+
 
 > 代码侵入性小。可以随时的移除。缓存还是使用原来系统的方式来进行存储。移除后无感知。
+
+
 
   [1]: http://7xrj9d.com1.z0.glb.clouddn.com/cache%E5%9B%BE.png
   [2]: http://7xrj9d.com1.z0.glb.clouddn.com/%E8%87%AA%E5%AE%9A%E4%B9%89cache%E7%AD%96%E7%95%A5.png
